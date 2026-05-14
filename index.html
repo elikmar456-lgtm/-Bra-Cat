@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=2.0, minimum-scale=0.5">
+  <title>🐱 TyCat — уютная забота</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Nunito', sans-serif;
+      background: radial-gradient(circle at 20% 20%, #1e3b4f, #0b1b2b);
+      min-height: 100vh; display: flex; justify-content: center; align-items: center;
+      padding: 20px; position: relative; overflow-x: hidden; overflow-y: auto; transition: background 0.8s;
+    }
+    body.theme-forest { background: radial-gradient(circle at 20% 20%, #2d5a27, #1a3318); }
+    body.theme-space { background: radial-gradient(circle at 20% 20%, #1a1a3e, #0a0a1a); }
+    body.theme-pink { background: radial-gradient(circle at 20% 20%, #5e3a4f, #2e1a28); }
+    body.theme-sunset { background: radial-gradient(circle at 20% 20%, #5e3a2f, #2e1a18); }
+    body.theme-ocean { background: radial-gradient(circle at 20% 20%, #1a4a5e, #0a1a2e); }
+    .bg-emoji { position: absolute; font-size: 2.5rem; opacity: 0.12; pointer-events: none; z-index: 0; }
+    .leaf { position: absolute; top: -60px; width: 30px; height: 30px;
+      background: radial-gradient(circle at 30% 30%, #f9e076, #c97e2c);
+      clip-path: polygon(0% 0%, 100% 10%, 80% 100%, 20% 90%); opacity: 0.7;
+      animation: leafFall linear infinite; pointer-events: none; z-index: 5; }
+    @keyframes leafFall { 0% { transform: translate(0,0) rotate(0deg); opacity:0.8; } 100% { transform: translate(40px,110vh) rotate(360deg); opacity:0.1; } }
+    .device-select-overlay { position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(8,15,24,0.97); display:flex; flex-direction:column; align-items:center;
+      justify-content:center; z-index:1000; backdrop-filter:blur(10px); }
+    .device-select-title { color:#fadf9f; font-size:2.2rem; margin-bottom:50px; text-shadow:0 0 30px #ffb347; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.05); } }
+    .device-buttons { display:flex; gap:40px; flex-wrap:wrap; justify-content:center; }
+    .device-btn { background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.2);
+      border-radius:40px; padding:40px 30px; cursor:pointer; transition:all 0.3s;
+      display:flex; flex-direction:column; align-items:center; gap:20px; color:white; min-width:180px; }
+    .device-btn:hover { background:rgba(255,255,255,0.15); border-color:#ffb347; transform:translateY(-10px); box-shadow:0 25px 45px rgba(255,179,71,0.3); }
+    .device-btn .device-icon { font-size:5rem; }
+    .device-btn .device-label { font-size:1.3rem; font-weight:bold; letter-spacing:3px; }
+    .intro-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:#0a121f;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999; transition:opacity 0.8s; }
+    .intro-cat { font-size:7rem; animation:spinGrow 1.2s ease-out forwards; }
+    @keyframes spinGrow { 0%{transform:scale(0) rotate(0deg);opacity:0;} 50%{transform:scale(1.3) rotate(180deg);opacity:1;} 100%{transform:scale(1) rotate(360deg);opacity:1;} }
+    .tycat-text { font-size:3.5rem; font-weight:bold; color:#fadf9f; text-shadow:0 0 25px #ffb347; margin-top:20px; letter-spacing:6px; }
+    .welcome-sub { color:#c0daf5; font-size:1.5rem; margin-top:15px; }
+    .game-container { width:100%; max-width:850px; background:rgba(18,30,41,0.75);
+      backdrop-filter:blur(22px); border-radius:60px; padding:20px 25px 30px;
+      box-shadow:0 35px 55px rgba(0,0,0,0.8), inset 0 2px 10px rgba(255,255,255,0.2);
+      border:1px solid rgba(255,255,255,0.25); display:flex; flex-direction:column;
+      align-items:center; position:relative; z-index:15; transition:all 0.3s; max-height:90vh; overflow-y:auto; }
+    .mobile-mode .game-container { max-width:420px; border-radius:35px; padding:15px 15px 25px; }
+    .promo-button { position:absolute; top:15px; right:20px; background:linear-gradient(135deg,#ffd966,#b8863c);
+      border:none; border-radius:40px; padding:8px 18px; font-weight:bold; color:#231f1a;
+      box-shadow:0 5px 0 #5e3e1a; cursor:pointer; font-size:1rem; z-index:30; }
+    h1 { color:#f7e3c0; text-shadow:0 5px 15px #00000070; margin:5px 0 10px; }
+    .desktop-mode h1 { font-size:2.5rem; } .mobile-mode h1 { font-size:1.6rem; }
+    .cat-area { background:rgba(0,0,0,0.35); border-radius:130px; padding:20px 35px 10px; margin:10px 0; display:flex; flex-direction:column; align-items:center; position:relative; }
+    .mobile-mode .cat-area { padding:15px 20px 8px; border-radius:100px; }
+    .bed-area { display:flex; align-items:flex-end; gap:12px; position:relative; }
+    .cat-emoji { filter:drop-shadow(0 15px 15px #000000b0); transition:all 0.3s; }
+    .desktop-mode .cat-emoji { font-size:7rem; } .mobile-mode .cat-emoji { font-size:4.5rem; }
+    .accessory-layer { position:absolute; pointer-events:none; z-index:2; transition:all 0.3s; }
+    .desktop-mode .accessory-layer { top:-15px; right:-20px; font-size:3.5rem; }
+    .mobile-mode .accessory-layer { top:-10px; right:-15px; font-size:2.5rem; }
+    .stats { display:flex; background:#1f3a4f; border-radius:40px; padding:12px 25px; color:#f5e1b9; font-weight:bold; }
+    .desktop-mode .stats { gap:22px; font-size:1.1rem; } .mobile-mode .stats { gap:10px; font-size:0.8rem; padding:8px 14px; }
+    .btn { background:radial-gradient(circle at 30% 30%,#ffe5b9,#b87c3a); border:none; border-radius:50px;
+      font-weight:bold; box-shadow:0 6px 0 #5a3e1c, 0 8px 18px black; cursor:pointer;
+      transition:0.07s; display:inline-flex; align-items:center; gap:6px; margin:3px; }
+    .desktop-mode .btn { padding:12px 22px; font-size:1rem; } .mobile-mode .btn { padding:10px 16px; font-size:0.85rem; }
+    .btn:active { transform:translateY(4px); box-shadow:0 2px 0 #5a3e1c; }
+    .btn.small { padding:8px 14px; font-size:0.85rem; }
+    .view { display:none; width:100%; } .active-view { display:block; }
+    .game-field { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; background:#6b4f32; border-radius:80px; margin:15px auto; }
+    .desktop-mode .game-field { max-width:350px; padding:20px; } .mobile-mode .game-field { max-width:260px; padding:15px; gap:8px; }
+    .hole { background:#3b2b1a; border-radius:50%; aspect-ratio:1; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:inset 0 8px 8px black; }
+    .desktop-mode .hole { font-size:2.5rem; } .mobile-mode .hole { font-size:1.8rem; }
+    .paw-active { background:#e3a869; box-shadow:0 0 25px #ffbb4d; }
+    .shop-section { background:rgba(0,0,0,0.3); border-radius:25px; padding:15px; margin:10px 0; width:100%; }
+    .shop-section h3 { color:#ffd966; margin-bottom:10px; text-align:center; }
+    .shop-items { display:flex; flex-wrap:wrap; justify-content:center; gap:12px; }
+    .shop-card { background:#253e50; border-radius:25px; color:#f5e7d3; text-align:center; }
+    .desktop-mode .shop-card { padding:14px; width:130px; } .mobile-mode .shop-card { padding:10px; width:105px; font-size:0.8rem; }
+    .device-indicator { position:fixed; top:12px; left:12px; background:rgba(0,0,0,0.5); padding:6px 14px; border-radius:25px; color:white; font-size:0.8rem; z-index:50; cursor:pointer; }
+    .daily-btn { background:linear-gradient(135deg,#ff6b6b,#ffd93d); color:#2c1e0f; animation:glow 2s infinite; }
+    @keyframes glow { 0%,100%{box-shadow:0 0 15px #ffd93d;} 50%{box-shadow:0 0 30px #ff6b6b;} }
+    .modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1e3347; padding:30px; border-radius:30px; z-index:200; text-align:center; color:white; box-shadow:0 20px 50px black; display:none; max-width:90vw; max-height:80vh; overflow-y:auto; }
+    .modal.active { display:block; }
+    .overlay-bg { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:199; display:none; }
+    .overlay-bg.active { display:block; }
+    .theme-select-btn { background:rgba(255,255,255,0.15); border:2px solid rgba(255,255,255,0.3); color:white; }
+    .theme-select-btn:hover { border-color:#ffd966; }
+    .maze-cell { display:inline-block; width:40px; height:40px; text-align:center; line-height:40px; font-size:1.5rem; border:1px solid #555; margin:1px; cursor:pointer; border-radius:8px; }
+    .maze-cell.wall { background:#333; cursor:default; }
+    .maze-cell.path { background:#5a8a5a; }
+    .maze-cell.player { background:#ffb347; }
+    .maze-cell.end { background:#ff6b6b; }
+  </style>
+</head>
+<body class="desktop-mode">
+<div id="bgEmojis"></div>
+<div class="device-select-overlay" id="deviceSelectScreen">
+  <div class="device-select-title">📱 Выбери устройство 💻</div>
+  <div class="device-buttons">
+    <div class="device-btn" id="selectPhone"><div class="device-icon">📱</div><div class="device-label">ТЕЛЕФОН</div></div>
+    <div class="device-btn" id="selectDesktop"><div class="device-icon">💻</div><div class="device-label">КОМПЬЮТЕР</div></div>
+  </div>
+</div>
+<div class="intro-overlay" id="introScreen" style="display:none;"><div class="intro-cat">🐈</div><div class="tycat-text">TyCat</div><div class="welcome-sub">🐾 Добро пожаловать! 🐾</div></div>
+<div class="device-indicator" id="deviceIndicator" style="display:none;">📱 Телефон</div>
+<div class="overlay-bg" id="overlayBg"></div>
+<div class="modal" id="modalBox"></div>
+
+<div class="game-container" id="appContainer">
+  <button class="promo-button" id="promoBtn">🎟️ Промокоды</button>
+  <h1>🐱✨ Мур-р-р ✨🐱</h1>
+  <div id="mainView" class="view active-view">
+    <div class="cat-area">
+      <div class="bed-area">
+        <span class="cat-emoji" id="catEmoji">🐈</span>
+        <span class="accessory-layer" id="accessoryLayer"></span>
+        <span id="bedDisplay" style="font-size:2.5rem;"></span>
+      </div>
+    </div>
+    <div class="stats"><span>🍗 <progress id="hungerProgress" value="80" max="100"></progress></span><span>😊 <progress id="moodProgress" value="70" max="100"></progress></span><span>💧 <progress id="thirstProgress" value="60" max="100"></progress></span></div>
+    <div style="margin:8px; font-size:1.5rem;">🪙 <span id="coinAmount">0</span> | 🏆 <span id="achCount">0</span>/14</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:8px 0;">
+      <button class="btn" id="playMiniGameBtn">🎮 Мини-игры</button>
+      <button class="btn" id="openShopBtn">🏪 Магазин</button>
+      <button class="btn daily-btn" id="dailyBonusBtn">🎁 Бонус</button>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+      <button class="btn small" id="photoBtn">📸 Фото</button>
+      <button class="btn small" id="talkBtn">💬 Кот</button>
+      <button class="btn small" id="themeBtn">🎨 Тема</button>
+      <button class="btn small" id="achBtn">🏆 Достижения</button>
+    </div>
+    <p style="color:#ffd966; margin-top:10px; font-size:0.9rem;" id="eventBanner">🎂 Праздничный ивент! +10 монет каждый день!</p>
+  </div>
+  <div id="gameView" class="view"><h2>🎮 Мини-игры</h2><div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:15px 0;">
+    <button class="btn game-select" data-game="paws">🐾 Лапки</button>
+    <button class="btn game-select" data-game="fish">🎣 Рыбалка</button>
+    <button class="btn game-select" data-game="maze">🌀 Лабиринт</button>
+    <button class="btn game-select" data-game="memory">🧠 Память</button>
+    <button class="btn game-select" data-game="clicker">👆 Кликер</button></div>
+    <div id="gameContent"></div><button class="btn" id="backFromGame" style="margin-top:10px;">↩️ Назад</button>
+  </div>
+  <div id="shopView" class="view"><h2>🛍️ Магазин</h2><div id="shopContainer"></div><button class="btn" id="backFromShop" style="margin-top:15px;">↩️ Назад</button></div>
+</div>
+
+<script>
+(function(){
+const state={
+  coins:0, hunger:80, mood:70, thirst:60, ownedBed:null, currentFur:'default',
+  accessory:null, deviceMode:'desktop', achievements:[], dailyClaimed:false,
+  theme:'default'
+};
+const achievementsList=[
+  {id:'first_game',name:'🎮 Новичок',desc:'Сыграть в мини-игру',icon:'🎮'},
+  {id:'catch10',name:'🐾 Ловец лапок',desc:'Поймать 10 лапок',icon:'🐾'},
+  {id:'rich',name:'💰 Богач',desc:'Накопить 200 монет',icon:'💰'},
+  {id:'shopaholic',name:'🛍️ Шопоголик',desc:'Купить 3 товара',icon:'🛍️'},
+  {id:'bed_owner',name:'🛏️ Домосед',desc:'Купить лежанку',icon:'🛏️'},
+  {id:'fur_change',name:'🎨 Стилист',desc:'Сменить окрас',icon:'🎨'},
+  {id:'thirst_save',name:'💧 Водохлёб',desc:'Купить воду',icon:'💧'},
+  {id:'mood_boost',name:'😊 Весельчак',desc:'Поднять настроение до 100',icon:'😊'},
+  {id:'theme_switch',name:'🌈 Декоратор',desc:'Сменить тему',icon:'🌈'},
+  {id:'photo_taken',name:'📸 Фотограф',desc:'Сделать фото',icon:'📸'},
+  {id:'talk_cat',name:'💬 Болтун',desc:'Поговорить с котом',icon:'💬'},
+  {id:'daily_user',name:'📅 Постоянный',desc:'Забрать дневной бонус',icon:'📅'},
+  {id:'fish5',name:'🎣 Рыбак',desc:'Поймать 5 рыб',icon:'🎣'},
+  {id:'memory_win',name:'🧠 Умник',desc:'Выиграть в память',icon:'🧠'}
+];
+const catDialogues=["Мяу! Я так рад тебя видеть! 🐱","Мур-р-р... почеши за ушком! 😸","Хочу играть! Давай в мини-игру! 🎮","У меня тут листопад... красиво! 🍂","Ты мой любимый хозяин! 💖","Купи мне новую игрушку! 🧶","Вкусняшку бы... 🍗","Смотри, я поймал лапку! 🐾","Обожаю рыбалку! 🎣","Давай поиграем в лабиринт! 🌀"];
+let itemsBought=0, totalPawsCaught=0, totalFishCaught=0;
+
+function updateUI(){
+  document.getElementById('coinAmount').textContent=state.coins;
+  document.getElementById('hungerProgress').value=state.hunger;
+  document.getElementById('moodProgress').value=state.mood;
+  document.getElementById('thirstProgress').value=state.thirst;
+  document.getElementById('bedDisplay').textContent=state.ownedBed==='bed_basic'?'🧺':state.ownedBed==='bed_royal'?'🛏️':'';
+  const cat=document.getElementById('catEmoji');
+  const furMap={orange:'🐈',siamese:'🐱',black:'🐈‍⬛',pink:'🐱',rainbow:'🐈',gold:'🐈',tiger:'🐯'};
+  cat.textContent=furMap[state.currentFur]||'🐈';
+  cat.style.filter='drop-shadow(0 15px 15px #000000b0)';
+  if(state.currentFur==='pink') cat.style.filter='hue-rotate(300deg) drop-shadow(0 15px 15px #000)';
+  else if(state.currentFur==='rainbow') cat.style.filter='hue-rotate(0deg) drop-shadow(0 0 20px red)';
+  else if(state.currentFur==='gold') cat.style.filter='sepia(1) drop-shadow(0 0 25px gold)';
+  const accLayer=document.getElementById('accessoryLayer');
+  const accMap={hat:'🎩',glasses:'👓',bow:'🎀',crown:'👑',scarf:'🧣',monocle:'🧐'};
+  accLayer.textContent=accMap[state.accessory]||'';
+  document.getElementById('achCount').textContent=state.achievements.length;
+  checkAchievements();
+}
+function addCoins(n){ state.coins+=n; updateUI(); }
+function unlockAchievement(id){
+  if(!state.achievements.includes(id)){ state.achievements.push(id); showModal(`🏆 Достижение: ${achievementsList.find(a=>a.id===id).name}!`); updateUI(); }
+}
+function checkAchievements(){
+  if(totalPawsCaught>=10) unlockAchievement('catch10');
+  if(state.coins>=200) unlockAchievement('rich');
+  if(itemsBought>=3) unlockAchievement('shopaholic');
+  if(state.ownedBed) unlockAchievement('bed_owner');
+  if(state.currentFur!=='default') unlockAchievement('fur_change');
+  if(state.mood>=100) unlockAchievement('mood_boost');
+  if(state.theme!=='default') unlockAchievement('theme_switch');
+  if(state.dailyClaimed) unlockAchievement('daily_user');
+  if(totalFishCaught>=5) unlockAchievement('fish5');
+}
+function showModal(text){ document.getElementById('modalBox').innerHTML=`<div>${text}</div><button class="btn" style="margin-top:15px;" onclick="document.getElementById('modalBox').classList.remove('active');document.getElementById('overlayBg').classList.remove('active')">OK</button>`; document.getElementById('modalBox').classList.add('active'); document.getElementById('overlayBg').classList.add('active'); }
+function setDeviceMode(mode){ state.deviceMode=mode; document.body.className=(mode==='mobile'?'mobile-mode':'desktop-mode')+' theme-'+state.theme; document.getElementById('deviceIndicator').textContent=mode==='mobile'?'📱 Телефон':'💻 Компьютер'; updateUI(); renderShop(); }
+setInterval(()=>{ state.hunger=Math.max(0,state.hunger-0.7); state.mood=Math.max(0,state.mood-0.5); state.thirst=Math.max(0,state.thirst-0.8); updateUI(); },3000);
+function showView(id){ ['mainView','gameView','shopView'].forEach(v=>document.getElementById(v).classList.remove('active-view')); document.getElementById(id).classList.add('active-view'); }
+
+// Магазин с отделами
+const shopSections=[
+  {title:'🏠 Лежанки',items:[{id:'bed_basic',name:'🧺 Плетёная',price:80,type:'bed'},{id:'bed_royal',name:'👑 Королевская',price:200,type:'bed'}]},
+  {title:'🎨 Окрасы',items:[{id:'fur_orange',name:'🐈 Рыжий',price:110,type:'fur',color:'orange'},{id:'fur_siamese',name:'🐱 Сиамский',price:130,type:'fur',color:'siamese'},{id:'fur_black',name:'🐈‍⬛ Чёрный',price:120,type:'fur',color:'black'},{id:'fur_pink',name:'💗 Розовый',price:150,type:'fur',color:'pink'},{id:'fur_rainbow',name:'🌈 Радужный',price:250,type:'fur',color:'rainbow'},{id:'fur_gold',name:'✨ Золотой',price:300,type:'fur',color:'gold'},{id:'fur_tiger',name:'🐯 Тигровый',price:350,type:'fur',color:'tiger'}]},
+  {title:'💍 Аксессуары',items:[{id:'acc_hat',name:'🎩 Шляпа',price:60,type:'accessory',acc:'hat'},{id:'acc_glasses',name:'👓 Очки',price:50,type:'accessory',acc:'glasses'},{id:'acc_bow',name:'🎀 Бантик',price:45,type:'accessory',acc:'bow'},{id:'acc_crown',name:'👑 Корона',price:180,type:'accessory',acc:'crown'},{id:'acc_scarf',name:'🧣 Шарфик',price:55,type:'accessory',acc:'scarf'},{id:'acc_monocle',name:'🧐 Монокль',price:70,type:'accessory',acc:'monocle'}]},
+  {title:'🍗 Расходники',items:[{id:'food',name:'🍗 Корм',price:25,type:'consumable',stat:'hunger',value:35},{id:'toy',name:'🧶 Игрушка',price:30,type:'consumable',stat:'mood',value:35},{id:'water',name:'💧 Вода',price:20,type:'consumable',stat:'thirst',value:40},{id:'prem_food',name:'🥩 Стейк',price:50,type:'consumable',stat:'hunger',value:70},{id:'catnip',name:'🌿 Кошачья мята',price:45,type:'consumable',stat:'mood',value:80}]}
+];
+function renderShop(){
+  const c=document.getElementById('shopContainer'); c.innerHTML='';
+  shopSections.forEach(section=>{
+    const sec=document.createElement('div'); sec.className='shop-section';
+    sec.innerHTML=`<h3>${section.title}</h3><div class="shop-items"></div>`;
+    const itemsDiv=sec.querySelector('.shop-items');
+    section.items.forEach(item=>{
+      const owned=(item.type==='bed'&&state.ownedBed===item.id)||(item.type==='fur'&&state.currentFur===item.color)||(item.type==='accessory'&&state.accessory===item.acc);
+      const card=document.createElement('div'); card.className='shop-card';
+      card.innerHTML=`<div style="font-size:2rem;">${item.name.split(' ')[0]}</div><strong>${item.name}</strong><br>💰${item.price}<br><button ${owned?'disabled':''} style="margin-top:5px;padding:5px 12px;border-radius:20px;cursor:pointer;">${owned?'✅':'Купить'}</button>`;
+      card.querySelector('button').addEventListener('click',()=>{
+        if(state.coins<item.price){ alert('Недостаточно монет 😿'); return; }
+        state.coins-=item.price; itemsBought++;
+        if(item.type==='bed') state.ownedBed=item.id;
+        else if(item.type==='fur') state.currentFur=item.color;
+        else if(item.type==='accessory') state.accessory=item.acc;
+        else if(item.type==='consumable'){ if(item.stat==='hunger') state.hunger=Math.min(100,state.hunger+item.value); if(item.stat==='mood') state.mood=Math.min(100,state.mood+item.value); if(item.stat==='thirst') state.thirst=Math.min(100,state.thirst+item.value); }
+        updateUI(); renderShop();
+      }); itemsDiv.appendChild(card);
+    }); c.appendChild(sec);
+  });
+}
+
+// Мини-игры
+let gameActive=false,timeoutId,fishInterval,mazeActive,memoryActive,clickerActive;
+let catches=0,totalRequired=10,diffTime=3000;
+function stopAllGames(){ gameActive=false; clearTimeout(timeoutId); if(fishInterval) clearInterval(fishInterval); fishActive=false; mazeActive=false; memoryActive=false; clickerActive=false; }
+function buildPawGame(){
+  document.getElementById('gameContent').innerHTML=`
+    <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;">
+      <button class="btn paw-diff small" data-diff="easy">🐣 Легко</button><button class="btn paw-diff small" data-diff="medium">⚡ Средне</button>
+      <button class="btn paw-diff small" data-diff="hard">🔥 Сложно</button><button class="btn paw-diff small" data-diff="extreme">💀 Хардкор</button></div>
+    <div class="game-field" id="holeGrid"></div><div>🐭 <span id="catchCounter">0</span>/<span id="totalRequired">10</span> | ⏱️ <span id="timerDisplay">-</span></div>`;
+  const grid=document.getElementById('holeGrid');
+  for(let i=0;i<9;i++){ const d=document.createElement('div'); d.className='hole'; d.textContent='🕳️'; d.addEventListener('click',(e)=>{ if(!gameActive||!e.currentTarget.classList.contains('paw-active')) return; clearTimeout(timeoutId); e.currentTarget.classList.remove('paw-active'); catches++; totalPawsCaught++; document.getElementById('catchCounter').textContent=catches; if(catches>=totalRequired){ stopAllGames(); let r=40; if(document.querySelector('.paw-diff.active')?.dataset.diff==='extreme') r=120; addCoins(r); unlockAchievement('first_game'); alert(`+${r} монет!`); } else spawnPaw(); }); grid.appendChild(d); }
+  document.querySelectorAll('.paw-diff').forEach(b=>b.addEventListener('click',function(){ document.querySelectorAll('.paw-diff').forEach(x=>x.classList.remove('active')); this.classList.add('active'); startPawGame(this.dataset.diff); }));
+}
+function spawnPaw(){ if(!gameActive||catches>=totalRequired) return; document.querySelectorAll('.hole').forEach(h=>h.classList.remove('paw-active')); const holes=document.querySelectorAll('.hole'); const hole=holes[Math.floor(Math.random()*holes.length)]; hole.classList.add('paw-active'); timeoutId=setTimeout(()=>{ if(gameActive) spawnPaw(); },diffTime); }
+function startPawGame(diff){ stopAllGames(); catches=0; if(diff==='easy'){diffTime=3000;totalRequired=10;} else if(diff==='medium'){diffTime=2500;totalRequired=10;} else if(diff==='hard'){diffTime=2000;totalRequired=10;} else{diffTime=1000;totalRequired=20;} document.getElementById('catchCounter').textContent='0'; document.getElementById('totalRequired').textContent=totalRequired; gameActive=true; spawnPaw(); }
+
+// Рыбалка
+function buildFishGame(){
+  document.getElementById('gameContent').innerHTML=`<div style="text-align:center;font-size:3rem;cursor:pointer;padding:40px;background:rgba(0,100,200,0.3);border-radius:30px;" id="fishPond">🎣🌊<br><small>Кликай по воде!</small></div><div>🐟 <span id="fishCount">0</span>/10 | ⏱️ <span id="fishTimer">30</span>с</div>`;
+  const pond=document.getElementById('fishPond'); let fishCaught=0,fishTime=30;
+  fishActive=true; document.getElementById('fishCount').textContent='0';
+  pond.addEventListener('click',()=>{ if(!fishActive) return; fishCaught++; totalFishCaught++; document.getElementById('fishCount').textContent=fishCaught; pond.style.transform='scale(1.08)'; setTimeout(()=>pond.style.transform='scale(1)',100); if(fishCaught>=10){ clearInterval(fishInterval); fishActive=false; addCoins(60); unlockAchievement('first_game'); alert('🎣 10 рыб! +60 монет'); } });
+  fishInterval=setInterval(()=>{ fishTime--; document.getElementById('fishTimer').textContent=fishTime; if(fishTime<=0){ clearInterval(fishInterval); fishActive=false; alert(`⏰ Время вышло! Поймано ${fishCaught} рыб. +${fishCaught*5} монет`); addCoins(fishCaught*5); } },1000);
+}
+
+// Лабиринт
+function buildMazeGame(){
+  const mazeLayout=[0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,1,0,0]; // 5x5
+  document.getElementById('gameContent').innerHTML=`<div style="display:grid;grid-template-columns:repeat(5,40px);gap:2px;justify-content:center;" id="mazeGrid"></div><div>🌀 Дойди до 🏁</div>`;
+  const grid=document.getElementById('mazeGrid'); let pos=0; mazeActive=true;
+  mazeLayout.forEach((v,i)=>{
+    const cell=document.createElement('div'); cell.className='maze-cell'; cell.id='mz'+i;
+    if(v===1) cell.classList.add('wall'); else cell.classList.add('path');
+    if(i===0) cell.classList.add('player'); if(i===24) cell.classList.add('end');
+    cell.textContent=i===0?'🐱':i===24?'🏁':v===1?'🧱':'';
+    cell.addEventListener('click',()=>{
+      if(!mazeActive||v===1) return;
+      const neighbors=[pos-5,pos+5,pos-1,pos+1].filter(n=>n>=0&&n<25&&mazeLayout[n]===0);
+      if(!neighbors.includes(i)) return;
+      document.getElementById('mz'+pos).classList.remove('player'); document.getElementById('mz'+pos).textContent='';
+      pos=i; document.getElementById('mz'+pos).classList.add('player'); document.getElementById('mz'+pos).textContent='🐱';
+      if(pos===24){ mazeActive=false; addCoins(70); unlockAchievement('first_game'); alert('🌀 Лабиринт пройден! +70 монет'); }
+    }); grid.appendChild(cell);
+  });
+}
+
+// Память
+function buildMemoryGame(){
+  const emojis=['🐱','🐶','🐭','🐹','🐰','🦊','🐻','🐼']; let cards=[...emojis,...emojis].sort(()=>Math.random()-0.5);
+  let flipped=[],matched=0; memoryActive=true;
+  document.getElementById('gameContent').innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,50px);gap:8px;justify-content:center;" id="memGrid"></div><div>🧠 Найди пары!</div>`;
+  const grid=document.getElementById('memGrid');
+  cards.forEach((emoji,i)=>{
+    const card=document.createElement('div'); card.style.width='50px'; card.style.height='50px'; card.style.background='#555'; card.style.borderRadius='10px'; card.style.cursor='pointer'; card.style.display='flex'; card.style.alignItems='center'; card.style.justifyContent='center'; card.style.fontSize='2rem';
+    card.addEventListener('click',()=>{
+      if(!memoryActive||flipped.length>=2||card.textContent) return;
+      card.textContent=emoji; flipped.push({card,emoji});
+      if(flipped.length===2){
+        if(flipped[0].emoji===flipped[1].emoji){ matched+=2; flipped=[]; if(matched===16){ memoryActive=false; addCoins(80); unlockAchievement('memory_win'); unlockAchievement('first_game'); alert('🧠 Все пары найдены! +80 монет'); } }
+        else{ setTimeout(()=>{ flipped.forEach(f=>f.card.textContent=''); flipped=[]; },500); }
+      }
+    }); grid.appendChild(card);
+  });
+}
+
+// Кликер
+function buildClickerGame(){
+  let clicks=0,time=15; clickerActive=true;
+  document.getElementById('gameContent').innerHTML=`<div style="text-align:center;font-size:4rem;cursor:pointer;padding:30px;" id="clickerBtn">🐾</div><div>👆 Кликов: <span id="clickCount">0</span> | ⏱️ <span id="clickTimer">15</span>с</div>`;
+  document.getElementById('clickerBtn').addEventListener('click',()=>{ if(!clickerActive) return; clicks++; document.getElementById('clickCount').textContent=clicks; });
+  const timer=setInterval(()=>{ time--; document.getElementById('clickTimer').textContent=time; if(time<=0){ clearInterval(timer); clickerActive=false; addCoins(clicks); unlockAchievement('first_game'); alert(`⏰ Время! ${clicks} кликов = +${clicks} монет`); } },1000);
+}
+
+document.querySelectorAll('.game-select').forEach(b=>b.addEventListener('click',function(){
+  stopAllGames(); if(fishInterval) clearInterval(fishInterval);
+  if(this.dataset.game==='paws') buildPawGame();
+  else if(this.dataset.game==='fish') buildFishGame();
+  else if(this.dataset.game==='maze') buildMazeGame();
+  else if(this.dataset.game==='memory') buildMemoryGame();
+  else if(this.dataset.game==='clicker') buildClickerGame();
+}));
+
+// Темы — выбор из списка
+const themes={default:'🌙 Ночная',forest:'🌲 Лесная',space:'🚀 Космическая',pink:'💗 Розовая',sunset:'🌅 Закат',ocean:'🌊 Океан'};
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  let html='<h3>🎨 Выбери тему</h3>';
+  Object.entries(themes).forEach(([key,name])=>{
+    html+=`<button class="btn small theme-select-btn" style="margin:5px;${state.theme===key?'border-color:#ffd966;':''}" data-theme="${key}">${name}</button>`;
+  });
+  html+='<br><button class="btn small" style="margin-top:10px;" onclick="document.getElementById(\'modalBox\').classList.remove(\'active\');document.getElementById(\'overlayBg\').classList.remove(\'active\')">Закрыть</button>';
+  document.getElementById('modalBox').innerHTML=html;
+  document.getElementById('modalBox').classList.add('active'); document.getElementById('overlayBg').classList.add('active');
+  document.querySelectorAll('.theme-select-btn').forEach(b=>b.addEventListener('click',function(){
+    state.theme=this.dataset.theme;
+    document.body.className=(state.deviceMode==='mobile'?'mobile-mode':'desktop-mode')+' theme-'+state.theme;
+    updateUI(); document.getElementById('modalBox').classList.remove('active'); document.getElementById('overlayBg').classList.remove('active');
+  }));
+});
+
+// Остальное
+document.getElementById('dailyBonusBtn').addEventListener('click',()=>{
+  const today=new Date().toDateString();
+  if(localStorage.getItem('dailyDate')===today){ alert('Уже получен сегодня! 🕐'); return; }
+  localStorage.setItem('dailyDate',today); state.dailyClaimed=true; addCoins(30); alert('🎁 Ежедневный бонус: +30 монет! (+10 ивент)'); updateUI();
+});
+document.getElementById('photoBtn').addEventListener('click',()=>{ unlockAchievement('photo_taken'); showModal('📸 Чиииз! Скриншот готов! 🐱✨'); });
+document.getElementById('talkBtn').addEventListener('click',()=>{ unlockAchievement('talk_cat'); showModal('💬 Кот: '+catDialogues[Math.floor(Math.random()*catDialogues.length)]); });
+document.getElementById('achBtn').addEventListener('click',()=>{
+  let txt='<h3>🏆 Достижения</h3>';
+  achievementsList.forEach(a=>{ txt+=`<p>${state.achievements.includes(a.id)?'✅':'🔒'} ${a.icon} ${a.name} - ${a.desc}</p>`; });
+  txt+='<button class="btn small" onclick="document.getElementById(\'modalBox\').classList.remove(\'active\');document.getElementById(\'overlayBg\').classList.remove(\'active\')">OK</button>';
+  document.getElementById('modalBox').innerHTML=txt; document.getElementById('modalBox').classList.add('active'); document.getElementById('overlayBg').classList.add('active');
+});
+document.getElementById('promoBtn').addEventListener('click',()=>{ const code=prompt('Введите промокод 🎟️\nTikTok: minizmik'); if(code&&code.toUpperCase()==='TIKTOK'&&!sessionStorage.getItem('tiktok_used')){ addCoins(70); sessionStorage.setItem('tiktok_used','1'); alert('🎟️ +70 монет!'); } else if(code) alert('Неверно или уже использован'); });
+setInterval(()=>{ const l=document.createElement('div'); l.className='leaf'; l.style.left=Math.random()*100+'%'; l.style.animationDuration=(Math.random()*8+6)+'s'; document.body.appendChild(l); setTimeout(()=>l.remove(),10000); },700);
+document.getElementById('selectPhone').addEventListener('click',()=>{ setDeviceMode('mobile'); document.getElementById('deviceSelectScreen').style.display='none'; document.getElementById('deviceIndicator').style.display='block'; startIntro(); });
+document.getElementById('selectDesktop').addEventListener('click',()=>{ setDeviceMode('desktop'); document.getElementById('deviceSelectScreen').style.display='none'; document.getElementById('deviceIndicator').style.display='block'; startIntro(); });
+function startIntro(){ document.getElementById('introScreen').style.display='flex'; setTimeout(()=>{ document.getElementById('introScreen').style.opacity='0'; setTimeout(()=>document.getElementById('introScreen').style.display='none',800); },4000); }
+document.getElementById('deviceIndicator').addEventListener('click',()=>setDeviceMode(state.deviceMode==='mobile'?'desktop':'mobile'));
+document.getElementById('playMiniGameBtn').addEventListener('click',()=>{ showView('gameView'); buildPawGame(); });
+document.getElementById('openShopBtn').addEventListener('click',()=>{ showView('shopView'); renderShop(); });
+document.getElementById('backFromGame').addEventListener('click',()=>{ stopAllGames(); if(fishInterval) clearInterval(fishInterval); showView('mainView'); });
+document.getElementById('backFromShop').addEventListener('click',()=>showView('mainView'));
+updateUI(); renderShop();
+})();
+</script>
+</body>
+</html>
